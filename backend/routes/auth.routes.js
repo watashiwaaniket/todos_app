@@ -15,18 +15,27 @@ authRoutes.post('/signup', async (req, res) => {
         });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 5);
-
-    const user = await User.create({ username, password: hashedPassword, email });
-    if (!user) {
-        return res.status(400).json({
-            message: 'User creation failed',
+    try {
+        const hashedPassword = await bcrypt.hash(password, 5);
+        const user = await User.create({ username, password: hashedPassword, email });
+        if (!user) {
+            return res.status(400).json({
+                message: 'User creation failed',
+            });
+        }
+        res.status(201).json({
+            message: 'User created successfully',
+        });
+    } catch (error) {
+        if (error?.code === 11000) {
+            return res.status(400).json({
+                message: 'An account with this email already exists. Sign in instead.',
+            });
+        }
+        return res.status(500).json({
+            message: 'Account creation failed. Try again.',
         });
     }
-
-    res.status(201).json({
-        message: 'User created successfully',
-    });
 });
 
 authRoutes.post('/login', async (req, res) => {
@@ -37,18 +46,24 @@ authRoutes.post('/login', async (req, res) => {
             message: 'Username and password are required',
         });
     }
-    const user = await User.findOne({ username });
-    if (!user) {
-        return res.status(400).json({
-            message: 'User not found',
+    try {
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.status(400).json({
+                message: 'User not found',
+            });
+        }
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(400).json({
+                message: 'Invalid password',
+            });
+        }
+        const token = jwt.sign({ id: user._id.toString() }, getEnv('JWT_KEY'));
+        res.json({ token });
+    } catch {
+        return res.status(500).json({
+            message: 'Sign in failed. Try again.',
         });
     }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-        return res.status(400).json({
-            message: 'Invalid password',
-        });
-    }
-    const token = jwt.sign({ id: user._id.toString() }, getEnv('JWT_KEY'));
-    res.json({ token });
 });

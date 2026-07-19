@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import cors from 'cors';
 import { connectDB } from './lib/db.js';
 import { authRoutes } from './routes/auth.routes.js';
 import { todosRoutes } from './routes/todos.routes.js';
@@ -16,6 +17,7 @@ const limiter = rateLimit({
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(limiter);
 
