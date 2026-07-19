@@ -7,6 +7,10 @@ export const auth = (req, res, next) => {
         return res.status(401).json({ message: 'Unauthorized' });
     }
     const decoded = jwt.verify(token, getEnv('JWT_KEY'));
-    req.user = decoded;
-    next();
+    if (decoded) {
+        req.userId = decoded.id;
+        next();
+    } else {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
 };
