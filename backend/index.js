@@ -2,7 +2,8 @@ import 'dotenv/config';
 import express from 'express';
 import { connectDB, User } from './lib/db.js';
 import bcrypt from 'bcrypt';
-
+import jwt from 'jsonwebtoken';
+import { getEnv } from './util/env.util.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -30,6 +31,30 @@ app.post('/signup', async (req, res) => {
     res.status(201).json({
         message: 'User created successfully',
     });
+});
+
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+    
+    if (!username || !password) {
+        return res.status(400).json({
+            message: 'Username and password are required',
+        });
+    }
+    const user = await User.findOne({ username });
+    if (!user) {
+        return res.status(400).json({
+            message: 'User not found',
+        });
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+        return res.status(400).json({
+            message: 'Invalid password',
+        });
+    }
+    const token = jwt.sign({ id: user._id }, getEnv('JWT_KEY'));
+    res.json({ token });
 });
 
 connectDB();

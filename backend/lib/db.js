@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import 'dotenv/config';
+import { getEnv } from '../util/env.util.js';
 
 const Schema = mongoose.Schema;
 const ObjectId = mongoose.Types.ObjectId;
@@ -21,7 +22,7 @@ const Todo = mongoose.model('Todo', TodoSchema);
 
 const connectDB = async () => {
     try {
-        await mongoose.connect(process.env.DATABASE_URL);
+        await mongoose.connect(getEnv('DATABASE_URL'));
         console.log('Connected to MongoDB');
     } catch (error) {
         console.error('Error connecting to MongoDB:', error);
